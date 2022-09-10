@@ -15,19 +15,19 @@ services:
         fromDatabase:
           name: meta_craft_db
           property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
+      # - key: SECRET_KEY
+      #   generateValue: true
       - key: WEB_CONCURRENCY
         value: 4
-      - key: REST_API_ID
-        value: b3776bdc121aXXXX
-      - key: REST_API_SECRET
-        value: b3776bdc121aCCCC
-      - key: TOKEN_STORAGE
-        value: b3776bdc121a923SSSS
-      - key: MEMCACHED_HOST
-        value: b3776bdc121aQQQQ
-      - key: PAYSTACK_KEY
-        value: b3776bdc121a923SSSS
-      - key: MEMCACHED_HOST
-        value: base_url
+      # - key: REST_API_ID
+      #   value: b3776bdc121aXXXX
+      # - key: REST_API_SECRET
+      #   value: b3776bdc121aCCCC
+      # - key: TOKEN_STORAGE
+      #   value: b3776bdc121a923SSSS
+      # - key: MEMCACHED_HOST
+      #   value: b3776bdc121aQQQQ
+      # - key: PAYSTACK_KEY
+      #   value: b3776bdc121a923SSSS
+      # - key: MEMCACHED_HOST
+      #   value: base_url
