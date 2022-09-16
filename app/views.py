@@ -99,7 +99,7 @@ def signup(request):
                     new_userData.save()
 
                 # Generate OTP
-                code = string_generator.numeric(6)
+                code = string_generator.numeric(5)
                 # Save OTP
                 user_OTP = Otp(user_id=userRandomId, otp_code=code)
                 user_OTP.save()
@@ -117,6 +117,7 @@ def signup(request):
                 payload = {
                     "user_id": f"{userRandomId}",
                     "validated": validated,
+                    "role": role,
                     "exp": timeLimit,
                 }
                 token = jwt.encode(payload, settings.SECRET_KEY)
@@ -158,4 +159,113 @@ def signup(request):
             }
     except Exception as e:
         return_data = {"success": False, "status": 502, "message": str(e)}
+    return Response(return_data)
+
+
+@api_view(["POST"])
+@token_required
+def verify(request, payload):
+    try:
+        code = request.data.get("code", None)
+        user_id = payload["user_id"]
+        validated = payload["validated"]
+        role = payload["role"]
+
+        reg_field = [code, user_id, validated]
+        if not None in reg_field and not "" in reg_field:
+            # get user info
+            otpData = Otp.objects.get(user_id=user_id)
+            if otpData.otp_code == code:
+                otpData.validated = True
+                otpData.save()
+                return_data = {
+                    "success": True,
+                    "status": 200,
+                    "role": role,
+                    "message": "Your Account is now Validated!",
+                }
+                return Response(return_data)
+            else:
+                return_data = {
+                    "success": False,
+                    "status": 422,
+                    "message": "Wrong Code Entered. Try again!",
+                }
+                return Response(return_data)
+        else:
+            return_data = {
+                "success": False,
+                "status": 409,
+                "message": "Kindly enter the codes sent to your email",
+            }
+            return Response(return_data)
+    except Exception as e:
+        return_data = {"success": False, "status": 502, "message": str(e)}
+    return Response(return_data)
+
+
+# RESEND VERIFICATION CODE API
+@api_view(["POST"])
+@token_required
+def resend_code(request, payload):
+    try:
+        user_id = payload["user_id"]
+        role = payload["role"]
+        field = [user_id, role]
+        if not None in field and not "" in field:
+            # if User.objects.filter(user_id=user_id).exists():
+            getOtp = Otp.objects.get(user_id=user_id)
+            if role == "provider":
+                userData = Service_Provider.objects.get(_id=user_id)
+            else:
+                userData = Client.objects.get(_id=user_id)
+            firstName = userData.firstname
+            code = getOtp.otp_code
+            if code:
+                # Resend mail using SMTP
+                mail_subject = "Activate Code Sent again for your MetaCraft account."
+                resentEmail = {
+                    "subject": mail_subject,
+                    "html": "<h4>Hello, "
+                    + firstName
+                    + "!</h4><p>Kindly find the Verification Code below sent again to activate your MetaCraft Account</p> <h1>"
+                    + code
+                    + "</h1>",
+                    "text": "Hello, "
+                    + firstName
+                    + "!\nKindly find the Verification Code below sent againto activate your MetaCraft Account",
+                    "from": {
+                        "name": "MetaCraft",
+                        "email": "donotreply@wastecoin.co",
+                    },
+                    "to": [{"name": firstName, "email": userData.email}],
+                }
+                SPApiProxy.smtp_send_mail(resentEmail)
+                return_data = {
+                    "success": True,
+                    "status": 200,
+                    "message": "Verfication Code sent again!",
+                }
+                return Response(return_data)
+            else:
+                return_data = {
+                    "success": False,
+                    "status": 422,
+                    "message": "We could not retrieve your Verification Code. Kindly register!",
+                }
+                return Response(return_data)
+            # else:
+            #     return_data = {
+            #         "success": False,
+            #         "status": 202,
+            #         "message": "An error occured. Try again later",
+            #     }
+            return Response(return_data)
+    except Exception as e:
+        return_data = {
+            "success": False,
+            "status": 502,
+            "message": str(e)
+            # "message": "Something went wrong!"
+        }
     return Response(return_data)
