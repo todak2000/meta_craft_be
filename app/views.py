@@ -59,16 +59,16 @@ def signup(request):
                     "status": 409,  # conflict status
                     "message": "User Exists",
                 }
-            elif (
-                validator.checkmail(email)
-                == False
-                # or validator.checkphone(phoneNumber) == False
-            ):
-                return_data = {
-                    "success": False,
-                    "status": 422,  # unprocessable entity
-                    "message": "Email or Phone number is Invalid",
-                }
+            # elif (
+            #     validator.checkmail(email)
+            #     == False
+            #     # or validator.checkphone(phoneNumber) == False
+            # ):
+            #     return_data = {
+            #         "success": False,
+            #         "status": 422,  # unprocessable entity
+            #         "message": "Email or Phone number is Invalid",
+            #     }
             else:
                 # encrypt password
                 encryped_password = password_functions.generate_password_hash(password)
