@@ -13,3 +13,4 @@ pysendpulse==0.1.4
 python-decouple==3.6
 python-jose-cryptodome
 coverage
+deprecated
