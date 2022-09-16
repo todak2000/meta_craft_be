@@ -7,7 +7,7 @@ error_code = 401
 
 
 def get_token_auth_header(request):
-    auth = request.META["header"]["Authorization"]
+    auth = request.META["headers"]["Authorization"]
 
     if not auth:
         error = {

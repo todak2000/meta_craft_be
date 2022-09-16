@@ -149,6 +149,7 @@ def signup(request):
                         "message": "The registration was successful.",
                         "user_id": userRandomId,
                         "token": f"{token}",
+                        "isValidated": validated,
                         "elapsed_time": f"{timeLimit}",
                     }
         else:

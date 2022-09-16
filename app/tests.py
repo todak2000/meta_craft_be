@@ -49,7 +49,7 @@ class MetaCraftTestCase(TestCase):
 
         res = self.client.post(
             "/auth",
-            header={"Authorization": "Bearer " + str(token)},
+            headers={"Authorization": "Bearer " + str(token)},
         )
         init = json.dumps(res.data)
         data = json.loads(init)
@@ -99,7 +99,7 @@ class MetaCraftTestCase(TestCase):
         code = string_generator.numeric(5)
         res = self.client.post(
             "/verify-user",
-            header={"Authorization": "Bearer " + str(token)},
+            headers={"Authorization": "Bearer " + str(token)},
             data={"code": code},
         )
 
@@ -109,11 +109,11 @@ class MetaCraftTestCase(TestCase):
         # )
         init = json.dumps(res.data)
         data = json.loads(init)
-        print(data, "dataa")
+        # print(data, "dataa")
         # if new_user["role"] == "provider":
         #     user = Service_Provider.objects.get(id=1)
         # else:
         #     user = Client.objects.get(id=1)
-        # self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 200)
         # self.assertEqual(data["success"], True)
         # self.assertEqual(data["user_id"], user._id)
