@@ -49,7 +49,8 @@ class MetaCraftTestCase(TestCase):
 
         res = self.client.post(
             "/auth",
-            headers={"Authorization": "Bearer " + str(token)},
+            HTTP_AUTHORIZATION="Bearer " + str(token),
+            # headers={"Authorization": "Bearer " + str(token)},
         )
         init = json.dumps(res.data)
         data = json.loads(init)
@@ -75,7 +76,6 @@ class MetaCraftTestCase(TestCase):
         )
         init = json.dumps(res.data)
         data = json.loads(init)
-        # print(data, "dataa")
         if new_user["role"] == "provider":
             user = Service_Provider.objects.get(id=1)
         else:
@@ -91,7 +91,7 @@ class MetaCraftTestCase(TestCase):
         )  # set duration for token
         payload = {
             "user_id": f"{string_generator.alphanumeric(5)}",
-            "validated": True,
+            "validated": False,
             "role": "provider",
             "exp": timeLimit,
         }
@@ -99,21 +99,12 @@ class MetaCraftTestCase(TestCase):
         code = string_generator.numeric(5)
         res = self.client.post(
             "/verify-user",
-            headers={"Authorization": "Bearer " + str(token)},
+            # headers={"Authorization": "Bearer " + str(token)},
+            HTTP_AUTHORIZATION="Bearer " + str(token),
             data={"code": code},
         )
 
-        # res = self.client.post(
-        #     "/signup",
-        #     new_user,
-        # )
         init = json.dumps(res.data)
         data = json.loads(init)
-        # print(data, "dataa")
-        # if new_user["role"] == "provider":
-        #     user = Service_Provider.objects.get(id=1)
-        # else:
-        #     user = Client.objects.get(id=1)
         self.assertEqual(res.status_code, 200)
         # self.assertEqual(data["success"], True)
-        # self.assertEqual(data["user_id"], user._id)

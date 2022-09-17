@@ -7,7 +7,7 @@ from .models import Client, Otp, Service, Service_Provider, Sub_Service, Review,
 from .CustomCode import validator, string_generator, password_functions, sms
 
 from pysendpulse.pysendpulse import PySendPulse
-
+import json
 from decouple import config
 import datetime
 import jwt
@@ -27,6 +27,16 @@ SPApiProxy = PySendPulse(
 def index(request):
     return_data = {"success": True, "status": 200, "message": "Metacraft API home page"}
     return Response(return_data)
+
+
+# @api_view(["POST"])
+# def test_auth(request):
+#     # print(request.META["HTTP_AUTHORIZATION"], "rereere")
+#     return_data = {
+#         "success": True,
+#         "status": 200,
+#     }
+#     return Response(return_data)
 
 
 @api_view(["POST"])
