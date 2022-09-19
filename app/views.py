@@ -336,12 +336,18 @@ def signin(request):
                     token = jwt.encode(payload, settings.SECRET_KEY)
                     # request.session['token'] = token.decode('UTF-8')
                     if is_valid_password and validated:
+                        user = {
+                            "name": str(user_data.firstname)
+                            + " "
+                            + str(user_data.lastname)
+                        }
                         return_data = {
                             "success": True,
                             "status": 200,
                             "message": "Successfull",
                             "token": token,
                             "user_id": user_data._id,
+                            "user": user,
                             "role": role,
                             "isValidated": validated,
                         }
