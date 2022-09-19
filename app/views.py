@@ -341,13 +341,14 @@ def signin(request):
                             + " "
                             + str(user_data.lastname)
                         }
+                        data = [user]
                         return_data = {
                             "success": True,
                             "status": 200,
                             "message": "Successfull",
                             "token": token,
                             "user_id": user_data._id,
-                            "user": user,
+                            "data": data,
                             "role": role,
                             "isValidated": validated,
                         }
