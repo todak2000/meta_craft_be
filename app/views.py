@@ -291,7 +291,7 @@ def resend_code(request, payload):
 @api_view(["POST"])
 def signin(request):
     try:
-        email = request.data.get("email", None)
+        email = request.data.get("email", None).replace(" ", "").lower()
         password = request.data.get("password", None)
         field = [email, password]
         if not None in field and not "" in field:
@@ -363,7 +363,7 @@ def signin(request):
             else:
                 return_data = {
                     "success": False,
-                    "status": 502,
+                    "status": 409,
                     "message": "Email is Invalid",
                 }
                 return Response(return_data)
