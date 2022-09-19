@@ -310,8 +310,10 @@ def signin(request):
                 else:
                     if Service_Provider.objects.filter(email=email).exists():
                         user_data = Service_Provider.objects.get(email=email)
+                        role = "provider"
                     elif Client.objects.filter(email=email).exists():
                         user_data = Client.objects.get(email=email)
+                        role = "client"
                     is_valid_password = password_functions.check_password_match(
                         password, user_data.password
                     )
@@ -323,6 +325,7 @@ def signin(request):
                     payload = {
                         "user_id": f"{user_data._id}",
                         "validated": validated,
+                        "role": role,
                         "exp": timeLimit,
                     }
                     token = jwt.encode(payload, settings.SECRET_KEY)
@@ -334,7 +337,7 @@ def signin(request):
                             "message": "Successfull",
                             "token": token,
                             "user_id": user_data._id,
-                            "role": f"{user_data.role}",
+                            "role": role,
                             "isValidated": validated,
                         }
                         # print(return_data, "return data")
@@ -381,6 +384,7 @@ def signin(request):
 def forgot_password(request):
     try:
         email = request.data.get("email", None)
+
         field = [email]
         if not None in field and not "" in field:
             if (
