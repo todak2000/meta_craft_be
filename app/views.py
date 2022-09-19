@@ -50,10 +50,10 @@ def test_auth(request, payload):
 @api_view(["POST"])
 def signup(request):
     try:
-        firstName = request.data.get("firstname", None)
-        lastName = request.data.get("lastname", None)
-        phoneNumber = request.data.get("phone", None)
-        email = request.data.get("email", None)
+        firstName = request.data.get("firstname", None).replace(" ", "").lower()
+        lastName = request.data.get("lastname", None).replace(" ", "").lower()
+        phoneNumber = request.data.get("phone", None).replace(" ", "").lower()
+        email = request.data.get("email", None).replace(" ", "").lower()
         password = request.data.get("password", None)
         role = request.data.get("role", None)
         reg_field = [firstName, lastName, phoneNumber, email, password, role]
@@ -255,7 +255,7 @@ def resend_code(request, payload):
                     + "</h1>",
                     "text": "Hello, "
                     + firstName
-                    + "!\nKindly find the Verification Code below sent againto activate your MetaCraft Account",
+                    + "!\nKindly find the Verification Code below sent again to activate your MetaCraft Account",
                     "from": {
                         "name": "MetaCraft",
                         "email": "donotreply@wastecoin.co",
@@ -426,7 +426,7 @@ def signin(request):
 @api_view(["POST"])
 def forgot_password(request):
     try:
-        email = request.data.get("email", None)
+        email = request.data.get("email", None).replace(" ", "").lower()
 
         field = [email]
         if not None in field and not "" in field:
