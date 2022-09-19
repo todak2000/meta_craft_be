@@ -263,6 +263,11 @@ def resend_code(request, payload):
                     "to": [{"name": firstName, "email": userData.email}],
                 }
                 SPApiProxy.smtp_send_mail(resentEmail)
+                msg_body = (
+                    "Kindly verify your MetaCraft account using this code: " + str(code)
+                )
+                phone = userData.phone
+                send_sms = sms.send_sms(msg_body, phone)
                 return_data = {
                     "success": True,
                     "status": 200,
@@ -343,6 +348,44 @@ def signin(request):
                         # print(return_data, "return data")
                         return Response(return_data)
                     elif is_valid_password and validated == False:
+
+                        getOtp = Otp.objects.get(user_id=user_data._id)
+                        firstName = user_data.firstname
+                        code = getOtp.otp_code
+                        if code:
+                            # Resend mail using SMTP
+                            mail_subject = (
+                                "Activate Code Sent again for your MetaCraft account."
+                            )
+                            resentEmail = {
+                                "subject": mail_subject,
+                                "html": "<h4>Hello, "
+                                + firstName
+                                + "!</h4><p>Kindly find the Verification Code below sent again to activate your MetaCraft Account</p> <h1>"
+                                + code
+                                + "</h1>",
+                                "text": "Hello, "
+                                + firstName
+                                + "!\nKindly find the Verification Code below sent againto activate your MetaCraft Account",
+                                "from": {
+                                    "name": "MetaCraft",
+                                    "email": "donotreply@wastecoin.co",
+                                },
+                                "to": [{"name": firstName, "email": user_data.email}],
+                            }
+                            SPApiProxy.smtp_send_mail(resentEmail)
+                            msg_body = (
+                                "Kindly verify your MetaCraft account using this code: "
+                                + str(code)
+                            )
+                            phone = user_data.phone
+                            send_sms = sms.send_sms(msg_body, phone)
+                            return_data = {
+                                "success": True,
+                                "status": 200,
+                                "message": "Verfication Code sent again!",
+                            }
+                            return Response(return_data)
                         return_data = {
                             "success": False,
                             "user_id": user_data._id,
