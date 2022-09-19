@@ -193,7 +193,18 @@ def verify(request, payload):
                     "success": True,
                     "status": 200,
                     "role": role,
+                    "code": code,
+                    "reset": False,
                     "message": "Your Account is now Validated!",
+                }
+                return Response(return_data)
+            elif otpData.password_reset_code == code:
+                return_data = {
+                    "success": True,
+                    "status": 200,
+                    "reset": True,
+                    "role": role,
+                    "message": "Kindly reset your password!",
                 }
                 return Response(return_data)
             else:
@@ -265,12 +276,211 @@ def resend_code(request, payload):
                     "message": "We could not retrieve your Verification Code. Kindly register!",
                 }
                 return Response(return_data)
-            # else:
-            #     return_data = {
-            #         "success": False,
-            #         "status": 202,
-            #         "message": "An error occured. Try again later",
-            #     }
+
+    except Exception as e:
+        return_data = {
+            "success": False,
+            "status": 502,
+            "message": str(e)
+            # "message": "Something went wrong!"
+        }
+    return Response(return_data)
+
+
+# SIGNIN API
+@api_view(["POST"])
+def signin(request):
+    try:
+        email = request.data.get("email", None)
+        password = request.data.get("password", None)
+        field = [email, password]
+        if not None in field and not "" in field:
+            validate_mail = validator.checkmail(email)
+            if validate_mail == True:
+                # print(Service_Provider.objects.filter(email=email).exists(), "chek")
+                if (
+                    Service_Provider.objects.filter(email=email).exists() == False
+                    and Client.objects.filter(email=email).exists() == False
+                ):
+                    return_data = {
+                        "success": False,
+                        "status": 409,
+                        "message": "User does not exist",
+                    }
+                else:
+                    if Service_Provider.objects.filter(email=email).exists():
+                        user_data = Service_Provider.objects.get(email=email)
+                    elif Client.objects.filter(email=email).exists():
+                        user_data = Client.objects.get(email=email)
+                    is_valid_password = password_functions.check_password_match(
+                        password, user_data.password
+                    )
+                    validated = Otp.objects.get(user_id=user_data._id).validated
+                    # Generate token
+                    timeLimit = datetime.datetime.utcnow() + datetime.timedelta(
+                        minutes=1440
+                    )  # set limit for user
+                    payload = {
+                        "user_id": f"{user_data._id}",
+                        "validated": validated,
+                        "exp": timeLimit,
+                    }
+                    token = jwt.encode(payload, settings.SECRET_KEY)
+                    # request.session['token'] = token.decode('UTF-8')
+                    if is_valid_password and validated:
+                        return_data = {
+                            "success": True,
+                            "status": 200,
+                            "message": "Successfull",
+                            "token": token,
+                            "user_id": user_data._id,
+                            "role": f"{user_data.role}",
+                            "isValidated": validated,
+                        }
+                        # print(return_data, "return data")
+                        return Response(return_data)
+                    elif is_valid_password and validated == False:
+                        return_data = {
+                            "success": False,
+                            "user_id": user_data._id,
+                            "isValidated": validated,
+                            "message": "User is not verified",
+                            "status": 408,
+                            "token": token,
+                        }
+                        return Response(return_data)
+
+                    else:
+                        return_data = {
+                            "success": False,
+                            "status": 409,
+                            "message": "Wrong Password",
+                        }
+                        return Response(return_data)
+            else:
+                return_data = {
+                    "success": False,
+                    "status": 502,
+                    "message": "Email is Invalid",
+                }
+                return Response(return_data)
+        else:
+            return_data = {
+                "success": False,
+                "status": 409,
+                "message": "Invalid Parameters",
+            }
+            return Response(return_data)
+    except Exception as e:
+        return_data = {"success": False, "status": 502, "message": str(e)}
+    return Response(return_data)
+
+
+# SEND PASSWORD LINK (FOROGT PASSWORD PAGE) API
+@api_view(["POST"])
+def forgot_password(request):
+    try:
+        email = request.data.get("email", None)
+        field = [email]
+        if not None in field and not "" in field:
+            if (
+                Client.objects.filter(email=email).exists() == True
+                or Service_Provider.objects.filter(email=email).exists() == True
+            ):
+                # user_data = Client.objects.get(
+                #     email=email
+                # ) or Service_Provider.objects.get(email=email)
+                if Service_Provider.objects.filter(email=email).exists():
+                    user_data = Service_Provider.objects.get(email=email)
+                    role = "provider"
+                elif Client.objects.filter(email=email).exists():
+                    user_data = Client.objects.get(email=email)
+                    role = "client"
+
+                getOtp = Otp.objects.get(user_id=user_data._id)
+                # userData = User.objects.get(email = email)
+                firstName = user_data.firstname
+                # Generate reset OTP
+                resetCode = string_generator.numeric(5)
+                # Save reset OTP
+                getOtp.password_reset_code = resetCode
+                getOtp.save()
+
+                if getOtp:
+                    # Resend mail using SMTP
+                    mail_subject = "Reset your MetaCraft account Password Confirmation."
+                    resentEmail = {
+                        "subject": mail_subject,
+                        "html": "<h4>Hi, "
+                        + firstName
+                        + "!</h4><p>Kindly find the Reset Code below to confirm that intend to change your MetaCraft Account Password</p> <h1>"
+                        + getOtp.password_reset_code
+                        + "</h1>",
+                        "text": "Hello, "
+                        + firstName
+                        + "!\nKindly find the Reset Code below to confirm that intend to change your MetaCraft Account Password",
+                        "from": {
+                            "name": "MetaCraft",
+                            "email": "donotreply@wastecoin.co",
+                        },
+                        "to": [{"name": firstName, "email": email}],
+                    }
+                    SPApiProxy.smtp_send_mail(resentEmail)
+
+                    phone = user_data.phone
+                    msg_body = (
+                        "Kindly verify your MetaCraft account using this code: "
+                        + str(getOtp.password_reset_code)
+                    )
+                    send_sms = sms.send_sms(msg_body, phone)
+                    # Get User Validation
+                    validated = getOtp.validated
+                    # Generate token
+                    timeLimit = datetime.datetime.utcnow() + datetime.timedelta(
+                        minutes=1440
+                    )  # set duration for token
+                    payload = {
+                        "user_id": f"{user_data._id}",
+                        "validated": validated,
+                        "role": role,
+                        "exp": timeLimit,
+                    }
+                    token = jwt.encode(payload, settings.SECRET_KEY)
+                    return_data = {
+                        "success": True,
+                        "status": 200,
+                        "token": token,
+                        "user_id": user_data._id,
+                        "message": "Reset Code sent!",
+                    }
+                    return Response(return_data)
+                else:
+                    return_data = {
+                        "success": False,
+                        "status": 422,
+                        "message": "Sorry! try again",
+                    }
+                    return Response(return_data)
+            elif validator.checkmail(email) == False:
+                return_data = {
+                    "success": False,
+                    "status": 409,
+                    "message": "Email is Invalid",
+                }
+                return Response(return_data)
+            else:
+                return_data = {
+                    "success": False,
+                    "status": 404,
+                    "message": "Email does not exist in our database",
+                }
+                return Response(return_data)
+        else:
+            return_data = {
+                "success": False,
+                "status": 422,
+                "message": "One or more fields is empty!",
+            }
             return Response(return_data)
     except Exception as e:
         return_data = {
@@ -278,5 +488,55 @@ def resend_code(request, payload):
             "status": 502,
             "message": str(e)
             # "message": "Something went wrong!"
+        }
+    return Response(return_data)
+
+
+# CHANGE PASSWORD API
+@api_view(["POST"])
+@token_required
+def change_password(request, payload):
+    try:
+        user_id = payload["user_id"]
+        new_password = request.data.get("password", None)
+        confirm_new_password = request.data.get("confirm_password", None)
+        if Service_Provider.objects.filter(_id=user_id).exists():
+            user_data = Service_Provider.objects.get(_id=user_id)
+        elif Client.objects.filter(_id=user_id).exists():
+            user_data = Client.objects.get(_id=user_id)
+
+        if user_data:
+            if new_password != confirm_new_password:
+                return_data = {
+                    "success": False,
+                    "status": 409,
+                    "message": "Password do not match!",
+                }
+                return Response(return_data)
+            else:
+                encryptpassword = password_functions.generate_password_hash(
+                    new_password
+                )
+                user_data.password = encryptpassword
+                user_data.save()
+                return_data = {
+                    "success": True,
+                    "status": 200,
+                    "message": "Password Changed Successfully!",
+                }
+                return Response(return_data)
+        else:
+            return_data = {
+                "success": False,
+                "status": 404,
+                "message": "Sorry, You are not Authorized to access this link!",
+            }
+            return Response(return_data)
+    except Exception as e:
+        return_data = {
+            "success": False,
+            "status": 502,
+            "message": str(e)
+            # "message": 'Sorry, Something went wrong!'
         }
     return Response(return_data)
