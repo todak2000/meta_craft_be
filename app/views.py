@@ -3,7 +3,17 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from meta_craft_be import settings
 from .auth.auth import token_required
-from .models import Client, Otp, Service, Service_Provider, Sub_Service, Review, Gallery
+from .models import (
+    Client,
+    Otp,
+    Service,
+    Service_Provider,
+    Sub_Service,
+    Review,
+    Gallery,
+    format_data,
+    format_sp_data,
+)
 from .CustomCode import validator, string_generator, password_functions, sms
 
 from pysendpulse.pysendpulse import PySendPulse
@@ -598,4 +608,68 @@ def change_password(request, payload):
             "message": str(e)
             # "message": 'Sorry, Something went wrong!'
         }
+    return Response(return_data)
+
+
+@api_view(["POST"])
+@token_required
+def get_sp(request, payload):
+    coordinates = request.data.get("coordinates", None)
+    service = request.data.get("service", None)
+
+    try:
+        user_id = payload["user_id"]
+        # client_data = Client.objects.get(phone=user_phone)
+        client_data = Client.objects.get(_id=user_id)
+        serviceProviders = Service_Provider.objects.filter(
+            state=client_data.state, services_rendered__contains=service
+        )
+        formated_data = format_sp_data(
+            serviceProviders, float(coordinates.longitude), float(coordinates.latitude)
+        )
+        num = len(formated_data)
+        # serviceProvidersList = []
+        # for i in range(0,num):
+        #     sp_id = serviceProviders[i].user_id
+        #     sp_firstname = serviceProviders[i].firstname
+        #     sp_lastname = serviceProviders[i].lastname
+        #     date_added = serviceProviders[i].date_added
+        #     sp_address  = serviceProviders[i].address
+        #     sp_phone  = serviceProviders[i].phone
+        #     sp_state = serviceProviders[i].state
+        #     sp_ratings = serviceProviders[i].ratings
+        #     longitude = serviceProviders[i].longitude
+        #     latitude = serviceProviders[i].latitude
+        #     to_json = {
+        #         "sp_id": sp_id,
+        #         "sp_firstname": sp_firstname,
+        #         "sp_lastname": sp_lastname,
+        #         "sp_address": sp_address,
+        #         "sp_phone": sp_phone,
+        #         "sp_state":sp_state,
+        #         "sp_ratings":sp_ratings,
+        #         "distance": distance.distance(float(client_data.longitude),float(client_data.latitude), float(longitude),float(latitude)),
+        #         "longitude": longitude,
+        #         "latitude": latitude,
+        #         "date_added": date_added,
+        #     }
+        #     serviceProvidersList.append(to_json)
+        if num > 0:
+            # newService = Services(client_id=client_data.user_id, amount=amount, service_type=service_type, service_form=service_form, address=address, payment_mode=payment_mode,description=description, specific_service=specific_service, unit=unit)
+            # newService.save()
+            return_data = {
+                "success": True,
+                "status": 200,
+                "serviceProviders": formated_data,
+            }
+        if num <= 0:
+            return_data = {
+                "success": True,
+                "status": 409,
+                "message": "Oops! there are no Providers of "
+                + service
+                + " around you.",
+            }
+    except Exception as e:
+        return_data = {"success": False, "status": 502, "message": str(e)}
     return Response(return_data)

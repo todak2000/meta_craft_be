@@ -1,12 +1,23 @@
 from django.db import models
 from django.utils import timezone
 from django.db.models.deletion import CASCADE
+from django.contrib.postgres.fields import ArrayField
 import json
+from .CustomCode import distance
 
 # Create your models here.
 def format_data(data):
     formated_data = [item.long() for item in data]
     return formated_data
+
+
+def format_sp_data(data, long, lat):
+    formated_data = [item.longer(long, lat) for item in data]
+    return formated_data
+
+
+def get_list_default():
+    return list(dict(["Hair Stylist", "Barber"]).keys())
 
 
 class Otp(models.Model):
@@ -142,7 +153,6 @@ class Service(models.Model):
         db_table = "Services_Table"
 
     service_name = models.TextField(verbose_name="Service Name", max_length=20)
-    # sub_service = models.ForeignKey(Sub_Service, on_delete=models.PROTECT, blank=True)
     type = models.TextField(
         max_length=999, verbose_name="Type of Service (Norma/Special"
     )
@@ -166,6 +176,25 @@ class Service(models.Model):
         return json.dumps(self.long())
 
 
+class Provider_Services_Rendered(models.Model):
+    class Meta:
+        db_table = "SP_Services_Table"
+
+    sp_id = models.TextField(verbose_name="Service Provider ID", max_length=20)
+    service = models.TextField(max_length=999, verbose_name="Service")
+    date_added = models.DateTimeField(default=timezone.now)
+
+    def long(self):
+        return {
+            "id": self.id,
+            "service": self.service_name,
+            "sp_id": self.sp_id,
+        }
+
+    def __str__(self):
+        return json.dumps(self.long())
+
+
 class Service_Provider(models.Model):
     class Meta:
         db_table = "Service_Providers_table"
@@ -183,11 +212,27 @@ class Service_Provider(models.Model):
     avatar = models.CharField(
         max_length=999, null=True, verbose_name="SP Picture/Avatar"
     )
+    longitude = models.TextField(
+        max_length=200, verbose_name=" SP Longitude", default="3.3347114"
+    )
+    latitude = models.TextField(
+        max_length=200, verbose_name="SP Latitude", default="6.5089405"
+    )
     ratings = models.FloatField(max_length=200, verbose_name="Job Ratings", default=1.0)
     pitch = models.CharField(max_length=999, null=True, verbose_name="Pitch")
     gallery = models.ForeignKey(Gallery, on_delete=models.CASCADE, null=True)
-    reviews = models.ForeignKey(Review, on_delete=models.PROTECT, null=True)
-    services_rendered = models.ForeignKey(Service, on_delete=models.PROTECT, null=True)
+    reviews = models.ForeignKey(
+        Review,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Services Rendered",
+    )
+    services_rendered = ArrayField(
+        models.CharField(max_length=1000),
+        blank=True,
+        default=get_list_default,
+    )
     date_added = models.DateTimeField(default=timezone.now)
 
     def short(self):
@@ -216,9 +261,42 @@ class Service_Provider(models.Model):
             "avatar": self.avatar,
             "ratings": self.ratings,
             "pitch": self.pitch,
-            "gallery": json.loads(self.gallery),
-            "reviews": json.loads(self.reviews),
-            "services_rendered": json.loads(self.services_rendered),
+            "services_rendered": format_data(self.services_rendered),
+            # "gallery": json.loads(self.gallery),
+            # "reviews": json.loads(self.reviews),
+            # "services_rendered": format_data(
+            #     Provider_Services_Rendered.objects.filter(sp_id=self._id).values(
+            #         "service"
+            #     )
+            # ),
+            # "services_rendered": json.loads(self.services_rendered),
+        }
+
+    def longer(self, long, lat):
+        return {
+            "id": self.id,
+            "client_id": self._id,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "email": self.email,
+            "phone": self.phone,
+            "address": self.address,
+            "state": self.state,
+            "avatar": self.avatar,
+            "ratings": self.ratings,
+            "pitch": self.pitch,
+            "services_rendered": format_data(self.services_rendered),
+            "distance": distance.distance(
+                long, lat, float(self.longitude), float(self.latitude)
+            ),
+            # "gallery": json.loads(self.gallery),
+            # "reviews": json.loads(self.reviews),
+            # "services_rendered": format_data(
+            #     Provider_Services_Rendered.objects.filter(sp_id=self._id).values(
+            #         "service"
+            #     )
+            # ),
+            # "services_rendered": json.loads(self.services_rendered),
         }
 
     def __str__(self):
