@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -89,7 +89,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "meta_craft_be.wsgi.application"
 
-if not DEBUG:
+if DEBUG:
     # Database
     # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
@@ -100,9 +100,7 @@ if not DEBUG:
         }
     }
 else:
-    # DATABASES['default'] = env.db('DATABASE_URL')  # noqa F405
-    # DATABASES['default']['ATOMIC_REQUESTS'] = True  # noqa F405
-    # DATABASES['default']['CONN_MAX_AGE'] = env.int('CONN_MAX_AGE', default=60)
+
     DATABASES = {
         "default": dj_database_url.config(
             default=config("DATABASE_URL"),

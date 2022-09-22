@@ -228,11 +228,9 @@ class Service_Provider(models.Model):
         blank=True,
         verbose_name="Services Rendered",
     )
-    services_rendered = ArrayField(
-        models.CharField(max_length=1000),
-        blank=True,
-        default=get_list_default,
-    )
+    # services_rendered = ArrayField(
+    #     models.CharField(max_length=1000), blank=True, null=True
+    # )
     date_added = models.DateTimeField(default=timezone.now)
 
     def short(self):
@@ -261,14 +259,14 @@ class Service_Provider(models.Model):
             "avatar": self.avatar,
             "ratings": self.ratings,
             "pitch": self.pitch,
-            "services_rendered": format_data(self.services_rendered),
+            # "services_rendered": format_data(self.services_rendered),
             # "gallery": json.loads(self.gallery),
             # "reviews": json.loads(self.reviews),
-            # "services_rendered": format_data(
-            #     Provider_Services_Rendered.objects.filter(sp_id=self._id).values(
-            #         "service"
-            #     )
-            # ),
+            "services_rendered": format_data(
+                Provider_Services_Rendered.objects.filter(sp_id=self._id).values(
+                    "service"
+                )
+            ),
             # "services_rendered": json.loads(self.services_rendered),
         }
 
@@ -285,7 +283,7 @@ class Service_Provider(models.Model):
             "avatar": self.avatar,
             "ratings": self.ratings,
             "pitch": self.pitch,
-            "services_rendered": format_data(self.services_rendered),
+            # "services_rendered": format_data(self.services_rendered),
             "distance": distance.distance(
                 long, lat, float(self.longitude), float(self.latitude)
             ),
