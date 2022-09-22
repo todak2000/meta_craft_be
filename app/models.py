@@ -4,6 +4,9 @@ from django.db.models.deletion import CASCADE
 import json
 
 # Create your models here.
+def format_data(data):
+    formated_data = [item.long() for item in data]
+    return formated_data
 
 
 class Otp(models.Model):
@@ -107,13 +110,19 @@ class Review(models.Model):
         return json.dumps(self.long())
 
 
+# Service IDS
+# Hair Stylist - 6  (Normal)
+# Barber - 2  (Normal)
+# Make-up Artist - 3  (Normal)
 class Sub_Service(models.Model):
     class Meta:
         db_table = "Sub_Services_Table"
 
-    main_service_id = models.TextField(verbose_name="Main Service ID", max_length=20)
-    name = models.TextField(max_length=500, verbose_name="Sub_Service name")
-    price = models.TextField(max_length=999, verbose_name="Prove of Service")
+    main_service_id = models.TextField(
+        verbose_name="Main Service ID", max_length=20, blank=True
+    )
+    name = models.TextField(max_length=500, verbose_name="Sub_Service name", blank=True)
+    price = models.TextField(max_length=999, verbose_name="Amount", blank=True)
     date_added = models.DateTimeField(default=timezone.now)
 
     def long(self):
@@ -121,7 +130,7 @@ class Sub_Service(models.Model):
             "id": self.id,
             "main_service_id": self.main_service_id,
             "name": self.name,
-            "price": self.price,
+            "amount": self.price,
         }
 
     def __str__(self):
@@ -132,21 +141,25 @@ class Service(models.Model):
     class Meta:
         db_table = "Services_Table"
 
-    service_name = models.TextField(verbose_name="SP ID", max_length=20)
-    sub_service = models.ForeignKey(Sub_Service, on_delete=models.PROTECT)
+    service_name = models.TextField(verbose_name="Service Name", max_length=20)
+    # sub_service = models.ForeignKey(Sub_Service, on_delete=models.PROTECT, blank=True)
     type = models.TextField(
         max_length=999, verbose_name="Type of Service (Norma/Special"
     )
-    service_avatar = models.TextField(max_length=500, verbose_name="Service Avatar")
+    service_avatar = models.TextField(
+        max_length=500, verbose_name="Service Avatar", blank=True
+    )
     date_added = models.DateTimeField(default=timezone.now)
 
     def long(self):
         return {
             "id": self.id,
-            "service_name": self.service_name,
-            "type": self.type,
-            "service_avatar": self.service_avatar,
-            "sub_service": json.loads(self.sub_service),
+            "service": self.service_name,
+            "serviceType": self.type,
+            "imgUrl": self.service_avatar,
+            "subService": format_data(
+                Sub_Service.objects.filter(main_service_id=self.id)
+            ),
         }
 
     def __str__(self):

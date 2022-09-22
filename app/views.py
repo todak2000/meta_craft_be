@@ -341,6 +341,9 @@ def signin(request):
                             + " "
                             + str(user_data.lastname)
                         }
+                        services = Service.objects.all()
+                        formatted_services = [service.long() for service in services]
+                        service_requests = []
                         data = [user]
                         return_data = {
                             "success": True,
@@ -349,6 +352,8 @@ def signin(request):
                             "token": token,
                             "user_id": user_data._id,
                             "data": data,
+                            "ongoingData": service_requests,
+                            "requestData": formatted_services,
                             "role": role,
                             "isValidated": validated,
                         }
