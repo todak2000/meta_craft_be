@@ -14,4 +14,5 @@ urlpatterns = [
     path("get-sp", views.get_sp),
     path("client-dashboard", views.client_dashboard),
     path("accept-sp", views.accept_sp),
+    path("client-submit-report", views.client_submit_report),
 ]

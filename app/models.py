@@ -346,6 +346,9 @@ class Service_Request(models.Model):
     service_address = models.TextField(
         max_length=99, verbose_name="Address where service is/was rendered"
     )
+    isCompleted = models.BooleanField(
+        default=False, verbose_name="Client Confirm Job done"
+    )
     client_paid = models.BooleanField(default=False, verbose_name="Client Paid")
     date_added = models.DateTimeField(default=timezone.now)
 
@@ -361,6 +364,31 @@ class Service_Request(models.Model):
             "amount": self.amount,
             "service_address": self.service_address,
             "hasClientPaid": self.client_paid,
+        }
+
+    def __str__(self):
+        return json.dumps(self.long())
+
+
+class Reviews(models.Model):
+    class Meta:
+        db_table = "Service_Reviews_Table"
+
+    service_id = models.TextField(verbose_name="Service ID", max_length=200)
+    client_id = models.TextField(max_length=999, verbose_name="Client ID")
+    sp_id = models.TextField(max_length=999, verbose_name="Provider ID")
+    # service = models.TextField(max_length=999, verbose_name="Main Service")
+    comment = models.IntegerField(verbose_name="Comment/Review from Client", blank=True)
+
+    date_added = models.DateTimeField(default=timezone.now)
+
+    def long(self):
+        return {
+            "id": self.id,
+            "service_id": self.service_id,
+            "client_id": self.client_id,
+            "sp_id": self.sp_id,
+            "comment": self.comment,
         }
 
     def __str__(self):

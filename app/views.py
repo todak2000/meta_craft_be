@@ -662,6 +662,8 @@ def client_dashboard(request, payload):
         user_id = payload["user_id"]
         services = Service.objects.all()
         formatted_services = [service.long() for service in services]
+        # ongoing = Service_Request.objects.filter(isCompleted=False, client_id=user_id).value('service')
+        # ongoingServices = Service.objects.filter(service_name=ongoing.service)
         service_requests = []
         return_data = {
             "success": True,
@@ -725,7 +727,129 @@ def accept_sp(request, payload):
             return_data = {
                 "success": True,
                 "status": 200,
+                "service_request_id": newService.id,
             }
     except Exception as e:
         return_data = {"success": False, "status": 502, "message": str(e)}
+    return Response(return_data)
+
+
+@api_view(["POST"])
+@token_required
+def client_submit_report(request, payload):
+    user_id = payload["user_id"]
+    comment = request.data.get("comment", None)
+    rating = request.data.get("rating", None)
+    completion = request.data.get("completion", None)
+    payment = request.data.get("payment", None)
+    service_request_id = request.data.get("service_request_id", None)
+    try:
+        updateService = Service_Request.objects.get(id=int(service_request_id))
+        if completion == "Yes":
+            updateService.isCompleted = True
+            updateService.save()
+        if updateService.payment_mode == "cash" and payment == "Yes":
+            updateService.client_paid = True
+            updateService.save()
+        # updateEscrow = Escrow.objects.get(job_id=int(job_id))
+        # updateEscrow.isPaid = True
+        # updateEscrow.save()
+
+        sp_data = Service_Provider.objects.get(_id=updateService.sp_id)
+        # sp_data.engaged = False
+        # sp_data.save()
+        newRatings = (sp_data.ratings + float(rating)) / 2
+        sp_data.ratings = newRatings
+        sp_data.save()
+        newReview = Review(
+            comment=comment,
+            service_id=service_request_id,
+            client_id=user_id,
+            sp_id=sp_data._id,
+        )
+        newReview.save()
+        # fees = updateService.amount * 0.9
+        # if (
+        #     updateService.payment_mode == "wallet"
+        #     and updateService.sp_id != None
+        #     or updateService.sp_id != ""
+        # ):
+        #     newClientBalance = sp_data.walletBalance + fees
+        #     sp_data.walletBalance = newClientBalance
+        #     sp_data.save()
+        #     newTransaction = Transaction(
+        #         from_id="MetaCraft",
+        #         to_id=sp_data.user_id,
+        #         transaction_type="Credit",
+        #         transaction_message="Payment for Job order-" + job_id,
+        #         amount=float(updateService.amount) * 0.9,
+        #     )
+        #     # newTransaction2 = Transaction(from_id=client_id, to_id="Vista", transaction_type="Debit", transaction_message="Payment for Job order-"+job_id, amount=float(updateService.amount))
+        #     # newTransaction2.save()
+        #     newTransaction.save()
+        # if updateService and sp_data and updateService.payment_mode == "wallet":
+        #     # Send mail using SMTP
+        #     mail_subject = sp_data.firstname + "! MetaCraft Job/Service Update"
+        #     email = {
+        #         "subject": mail_subject,
+        #         "html": "<h4>Hello, "
+        #         + sp_data.firstname
+        #         + "!</h4><p> Be kindly informed that the client have confirmed the Job Completion and you have been credited with the sum of NGN"
+        #         + str(fees)
+        #         + ". Please kindly check your wallet for your earnings</p>",
+        #         "text": "Hello, "
+        #         + sp_data.firstname
+        #         + "!\n Be kindly informed that the client have confirmed the Job Completion and you have been credited with the sum of NGN"
+        #         + str(fees)
+        #         + ". Please kindly check your wallet for your earnings",
+        #         "from": {"name": "MetaCraft", "email": "donotreply@wastecoin.co"},
+        #         "to": [{"name": sp_data.firstname, "email": sp_data.email}],
+        #     }
+        #     SPApiProxy.smtp_send_mail(email)
+        #     return_data = {
+        #         "success": True,
+        #         "status": 200,
+        #     }
+        # elif updateService and sp_data and updateService.payment_mode == "cash":
+        #     sp_data2 = User.objects.get(user_id=sp_id)
+        #     sp_data2.owingVistaCommission = True
+        #     sp_data2.save()
+        #     com = updateService.amount * 0.1
+        #     newSPBalance = sp_data.walletBalance - com
+        #     sp_data.walletBalance = newSPBalance
+        #     sp_data.save()
+        #     # Send mail using SMTP
+        #     mail_subject = sp_data.firstname + "! MetaCraft Job/Service Update"
+        #     email = {
+        #         "subject": mail_subject,
+        #         "html": "<h4>Hello, "
+        #         + sp_data.firstname
+        #         + "!</h4><p> Be kindly informed that the client have confirmed the Job Completion and you have collected the cash of sum of NGN"
+        #         + str(updateService.amount)
+        #         + ". The sum of "
+        #         + str(com)
+        #         + " has been deducted from your account. Kindly deposit that eaxct amount into your wallet to offset your debt. Your cooperation is highly appreciated. You wont be able to get another request until your debt is cleared. Thanks.</p>",
+        #         "text": "Hello, "
+        #         + sp_data.firstname
+        #         + "!\n Be kindly informed that the client have confirmed the Job Completion and you have been credited with the sum of NGN"
+        #         + str(updateService.amount)
+        #         + ". The sum of "
+        #         + str(com)
+        #         + " has been deducted from your account. Kindly deposit that eaxct amount into your wallet to offset your debt. Your cooperation is highly appreciated. You wont be able to get another request until your debt is cleared. Thanks.",
+        #         "from": {"name": "MetaCraft", "email": "donotreply@wastecoin.co"},
+        #         "to": [{"name": sp_data.firstname, "email": sp_data.email}],
+        #     }
+        #     SPApiProxy.smtp_send_mail(email)
+        #     return_data = {
+        #         "success": True,
+        #         "status": 200,
+        #     }
+    except Exception as e:
+        return_data = {
+            "success": False,
+            "status": 201,
+            "message": str(e),
+            # "fees": fees,
+            # "newBalance": newClientBalance
+        }
     return Response(return_data)

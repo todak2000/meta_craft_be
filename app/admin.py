@@ -8,6 +8,8 @@ from .models import (
     Review,
     Gallery,
     Provider_Services_Rendered,
+    Service_Request,
+    Reviews,
 )
 
 # Register your models here.
@@ -19,3 +21,5 @@ admin.site.register(Sub_Service)
 admin.site.register(Review)
 admin.site.register(Gallery)
 admin.site.register(Provider_Services_Rendered)
+admin.site.register(Service_Request)
+admin.site.register(Reviews)
