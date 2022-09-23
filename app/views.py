@@ -658,7 +658,6 @@ def get_sp(request, payload):
 def client_dashboard(request, payload):
     try:
         user_id = payload["user_id"]
-        # client_data = Client.objects.get(_id=user_id)
         services = Service.objects.all()
         formatted_services = [service.long() for service in services]
         service_requests = []
