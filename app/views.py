@@ -353,9 +353,9 @@ def signin(request):
                             + " "
                             + str(user_data.lastname)
                         }
-                        services = Service.objects.all()
-                        formatted_services = [service.long() for service in services]
-                        service_requests = []
+                        # services = Service.objects.all()
+                        # formatted_services = [service.long() for service in services]
+                        # service_requests = []
                         data = [user]
                         return_data = {
                             "success": True,
@@ -364,8 +364,6 @@ def signin(request):
                             "token": token,
                             "user_id": user_data._id,
                             "data": data,
-                            "ongoingData": service_requests,
-                            "requestData": formatted_services,
                             "role": role,
                             "isValidated": validated,
                         }
@@ -650,6 +648,26 @@ def get_sp(request, payload):
                 + service
                 + " around you.",
             }
+    except Exception as e:
+        return_data = {"success": False, "status": 502, "message": str(e)}
+    return Response(return_data)
+
+
+@api_view(["POST"])
+@token_required
+def client_dashboard(request, payload):
+    try:
+        user_id = payload["user_id"]
+        # client_data = Client.objects.get(_id=user_id)
+        services = Service.objects.all()
+        formatted_services = [service.long() for service in services]
+        service_requests = []
+        return_data = {
+            "success": True,
+            "status": 200,
+            "ongoingData": service_requests,
+            "requestData": formatted_services,
+        }
     except Exception as e:
         return_data = {"success": False, "status": 502, "message": str(e)}
     return Response(return_data)

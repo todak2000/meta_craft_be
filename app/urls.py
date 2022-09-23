@@ -12,4 +12,5 @@ urlpatterns = [
     path("forgot-password", views.forgot_password),
     path("change-password", views.change_password),
     path("get-sp", views.get_sp),
+    path("client-dashboard", views.client_dashboard),
 ]
