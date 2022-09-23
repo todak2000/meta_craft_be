@@ -11,13 +11,20 @@ def format_data(data):
     return formated_data
 
 
+# function to find the closest sp to client
+def get_closest_sp(data):
+    seq = [x["distance"] for x in data]
+    y = min(seq)
+    z = [d for d in data if d["distance"] == y]
+    print(z, "closest")
+    return z
+
+
+# function to format sp data
 def format_sp_data(data, long, lat):
     formated_data = [item.longer(long, lat) for item in data]
-    return formated_data
-
-
-def get_list_default():
-    return list(dict(["Hair Stylist", "Barber"]).keys())
+    closest_sp = get_closest_sp(formated_data)
+    return closest_sp
 
 
 class Otp(models.Model):
@@ -57,10 +64,14 @@ class Client(models.Model):
         max_length=15, unique=True, null=True, verbose_name="Telephone number"
     )
     password = models.TextField(max_length=200, verbose_name="Password")
-    address = models.TextField(max_length=200, verbose_name="Address", null=True)
-    state = models.TextField(max_length=200, verbose_name="State", null=True)
+    address = models.TextField(
+        max_length=200, verbose_name="Address", null=True, blank=True
+    )
+    state = models.TextField(
+        max_length=200, verbose_name="State", null=True, blank=True
+    )
     avatar = models.CharField(
-        max_length=999, null=True, verbose_name="Client Picture/Avatar"
+        max_length=999, null=True, verbose_name="Client Picture/Avatar", blank=True
     )
     date_added = models.DateTimeField(default=timezone.now)
 
@@ -187,7 +198,7 @@ class Provider_Services_Rendered(models.Model):
     def long(self):
         return {
             "id": self.id,
-            "service": self.service_name,
+            "service": self.service,
             "sp_id": self.sp_id,
         }
 
@@ -200,17 +211,25 @@ class Service_Provider(models.Model):
         db_table = "Service_Providers_table"
 
     _id = models.CharField(max_length=50, unique=True)
-    firstname = models.CharField(max_length=30, verbose_name="Firstname", blank=True)
+    firstname = models.CharField(
+        max_length=30,
+        verbose_name="Firstname",
+        blank=True,
+    )
     lastname = models.CharField(max_length=30, verbose_name="Lastname", blank=True)
     email = models.EmailField(max_length=90, unique=True, verbose_name="Email")
     phone = models.CharField(
         max_length=15, unique=True, null=True, verbose_name="Telephone number"
     )
     password = models.TextField(max_length=200, verbose_name="Password")
-    address = models.TextField(max_length=200, verbose_name="Address", null=True)
-    state = models.TextField(max_length=200, verbose_name="State", null=True)
+    address = models.TextField(
+        max_length=200, verbose_name="Address", null=True, blank=True
+    )
+    state = models.TextField(
+        max_length=200, verbose_name="State", null=True, blank=True
+    )
     avatar = models.CharField(
-        max_length=999, null=True, verbose_name="SP Picture/Avatar"
+        max_length=999, null=True, verbose_name="SP Picture/Avatar", blank=True
     )
     longitude = models.TextField(
         max_length=200, verbose_name=" SP Longitude", default="3.3347114"
@@ -219,15 +238,17 @@ class Service_Provider(models.Model):
         max_length=200, verbose_name="SP Latitude", default="6.5089405"
     )
     ratings = models.FloatField(max_length=200, verbose_name="Job Ratings", default=1.0)
-    pitch = models.CharField(max_length=999, null=True, verbose_name="Pitch")
-    gallery = models.ForeignKey(Gallery, on_delete=models.CASCADE, null=True)
-    reviews = models.ForeignKey(
-        Review,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        verbose_name="Services Rendered",
+    pitch = models.CharField(
+        max_length=999, null=True, verbose_name="Pitch", blank=True
     )
+    # gallery = models.ForeignKey(Gallery, on_delete=models.CASCADE, null=True)
+    # reviews = models.ForeignKey(
+    #     Review,
+    #     on_delete=models.PROTECT,
+    #     null=True,
+    #     blank=True,
+    #     verbose_name="Services Rendered",
+    # )
     # services_rendered = ArrayField(
     #     models.CharField(max_length=1000), blank=True, null=True
     # )
@@ -236,7 +257,7 @@ class Service_Provider(models.Model):
     def short(self):
         return {
             "id": self.id,
-            "client_id": self._id,
+            "sp_id": self._id,
             "firstname": self.firstname,
             "lastname": self.lastname,
             "email": self.email,
@@ -249,7 +270,7 @@ class Service_Provider(models.Model):
     def long(self):
         return {
             "id": self.id,
-            "client_id": self._id,
+            "sp_id": self._id,
             "firstname": self.firstname,
             "lastname": self.lastname,
             "email": self.email,
@@ -273,7 +294,7 @@ class Service_Provider(models.Model):
     def longer(self, long, lat):
         return {
             "id": self.id,
-            "client_id": self._id,
+            "sp_id": self._id,
             "firstname": self.firstname,
             "lastname": self.lastname,
             "email": self.email,
@@ -289,11 +310,9 @@ class Service_Provider(models.Model):
             ),
             # "gallery": json.loads(self.gallery),
             # "reviews": json.loads(self.reviews),
-            # "services_rendered": format_data(
-            #     Provider_Services_Rendered.objects.filter(sp_id=self._id).values(
-            #         "service"
-            #     )
-            # ),
+            "services_rendered": format_data(
+                Provider_Services_Rendered.objects.filter(sp_id=self._id)
+            ),
             # "services_rendered": json.loads(self.services_rendered),
         }
 

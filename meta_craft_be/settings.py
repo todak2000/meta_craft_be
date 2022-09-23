@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -65,9 +65,6 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_HEADERS = default_headers + ("Access-Control-Allow-Origin",)
 
-# CORS_ORIGIN_WHITELIST = [
-#     "http://192.168.191.22:19000",
-# ]
 
 ROOT_URLCONF = "meta_craft_be.urls"
 
