@@ -692,11 +692,11 @@ def accept_sp(request, payload):
         # client_data = Client.objects.get(_id=user_id)
         newService = Service_Request(
             client_id=user_id,
+            sp_id=sp_id,
             service=service,
             amount=amount,
             service_address=address,
             quantity=quantity,
-            service_address=address,
             payment_mode=payment_mode,
             service_list=formated_service_list,
         )
