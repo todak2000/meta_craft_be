@@ -11,6 +11,16 @@ def format_data(data):
     return formated_data
 
 
+def listToString(s):
+    # initialize an empty string
+    str1 = ""
+    # traverse in the string
+    for ele in s:
+        str1 += str(ele) + ","
+    # return string
+    return str1
+
+
 # function to find the closest sp to client
 def get_closest_sp(data):
     seq = [x["distance"] for x in data]
@@ -318,3 +328,40 @@ class Service_Provider(models.Model):
 
     def __str__(self):
         return json.dumps(self.short())
+
+
+class Service_Request(models.Model):
+    class Meta:
+        db_table = "Service_Resquests_Table"
+
+    service_list = models.TextField(verbose_name="Service List", max_length=200)
+    client_id = models.TextField(max_length=999, verbose_name="Client ID")
+    sp_id = models.TextField(max_length=999, verbose_name="Provider ID")
+    service = models.TextField(max_length=999, verbose_name="Main Service")
+    quantity = models.IntegerField(verbose_name="Quantity/Units", blank=True)
+    payment_mode = models.TextField(
+        max_length=99, verbose_name="Payment mode (cash/wallet)"
+    )
+    amount = models.TextField(max_length=99, verbose_name="Total amount")
+    service_address = models.TextField(
+        max_length=99, verbose_name="Address where service is/was rendered"
+    )
+    client_paid = models.BooleanField(default=False, verbose_name="Client Paid")
+    date_added = models.DateTimeField(default=timezone.now)
+
+    def long(self):
+        return {
+            "id": self.id,
+            "service": self.service,
+            "quantity": self.quantity,
+            "client_id": self.client_id,
+            "sp_id": self.sp_id,
+            "service_list": self.service_list,
+            "payment_mode": self.payment_mode,
+            "amount": self.amount,
+            "service_address": self.service_address,
+            "hasClientPaid": self.client_paid,
+        }
+
+    def __str__(self):
+        return json.dumps(self.long())

@@ -12,8 +12,10 @@ from .models import (
     Review,
     Gallery,
     Provider_Services_Rendered,
+    Service_Request,
     format_data,
     format_sp_data,
+    listToString,
 )
 from .CustomCode import validator, string_generator, password_functions, sms
 
@@ -667,6 +669,63 @@ def client_dashboard(request, payload):
             "ongoingData": service_requests,
             "requestData": formatted_services,
         }
+    except Exception as e:
+        return_data = {"success": False, "status": 502, "message": str(e)}
+    return Response(return_data)
+
+
+@api_view(["POST"])
+@token_required
+def accept_sp(request, payload):
+    sp_id = request.data.get("sp_id", None)
+    service = request.data.get("service", None)
+    address = request.data.get("address", None)
+    quantity = request.data.get("quantity", None)
+    service_list = request.data.get("serviceList", None)
+    amount = request.data.get("totalAmount", None)
+    payment_mode = request.data.get("paymentMode", None)
+    formated_service_list = listToString(service_list)
+
+    try:
+        user_id = payload["user_id"]
+
+        # client_data = Client.objects.get(_id=user_id)
+        newService = Service_Request(
+            client_id=user_id,
+            service=service,
+            amount=amount,
+            service_address=address,
+            quantity=quantity,
+            address=address,
+            payment_mode=payment_mode,
+            service_list=formated_service_list,
+        )
+        newService.save()
+        sp_data = Service_Provider.objects.get(_id=sp_id)
+        if newService:
+            # Send mail using SMTP
+            mail_subject = sp_data.firstname + "! MetaCraft Job/Service Update"
+            email = {
+                "subject": mail_subject,
+                "html": "<h4>Hello, "
+                + sp_data.firstname
+                + "!</h4><p> You have a new Job/Service Request from a client. Kindly login to your dashboard and accept/Reject the Job/Service.</p>",
+                "text": "Hello, "
+                + sp_data.firstname
+                + "!\n You have a new Job/Service Request from a client. Kindly login to your dashboard and accept/Reject the Job/Service",
+                "from": {"name": "MetaCraft", "email": "donotreply@wastecoin.co"},
+                "to": [{"name": sp_data.firstname, "email": sp_data.email}],
+            }
+            SPApiProxy.smtp_send_mail(email)
+
+            msg_body = "You have a new Job/Service Request from a client. Kindly login to your dashboard and accept/Reject the Job/Service"
+            phone = sp_data.phone
+            send_sms = sms.send_sms(msg_body, phone)
+
+            return_data = {
+                "success": True,
+                "status": 200,
+            }
     except Exception as e:
         return_data = {"success": False, "status": 502, "message": str(e)}
     return Response(return_data)

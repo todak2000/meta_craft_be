@@ -13,4 +13,5 @@ urlpatterns = [
     path("change-password", views.change_password),
     path("get-sp", views.get_sp),
     path("client-dashboard", views.client_dashboard),
+    path("accept-sp", views.accept_sp),
 ]
