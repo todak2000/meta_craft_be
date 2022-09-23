@@ -696,7 +696,7 @@ def accept_sp(request, payload):
             amount=amount,
             service_address=address,
             quantity=quantity,
-            address=address,
+            service_address=address,
             payment_mode=payment_mode,
             service_list=formated_service_list,
         )
